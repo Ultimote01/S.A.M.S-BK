@@ -1,0 +1,1 @@
+The student attendance management app  backend uses the modern technology to perform CRUD operations
