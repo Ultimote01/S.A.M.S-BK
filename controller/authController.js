@@ -12,7 +12,6 @@ const catchAsync = require("./catchAsync");
 
 
 function createToken (id){
-    
 
     return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPRIES_IN
@@ -53,21 +52,6 @@ exports.signIn = catchAsync( async (req, res, next)=>{
 
     
     const token = createToken(user.id);
-  
-
-    
-    // if (user.id+"".startsWith("9")){
-    //      attendanceList = await AttendanceModel.find(
-    //         // Projection Part
-    //        { "classes": { $elemMatch: {lecturer:user.fullName} } }  
-    // )
-    // } else if (user.id+"".startsWith("7")){
-    //     attendanceList = await AttendanceModel.find(
-    //          //Projection part
-    //         { "classes": { $elemMatch: { "students": {$elemMatch: {$eq: user.id} }} } } 
-    //     )
-    // }
-
 
     const attendanceList = await AttendanceModel.find();
     
@@ -115,11 +99,21 @@ exports.signUp = catchAsync(async (req, res, next )=>{
     const userExist = await User.findOne({id: req.body.id});
 
     if (userExist) throw new AppError("User with this id already exist", 403);
+    
+    const userLecturers = await User.find({"role": {"$eq": "lecturer"}});
+    const lecturersCourses = userLecturers.map((lecturer)=> lecturer.courses).flatMap((course)=> course);
+
+    if (req.body.role === "lecturer"){
+        req.body.courses.forEach(course => {
+        if (lecturersCourses.indexOf(course) > -1)  throw new AppError("Sorry, position isn't vacant.", 403)
+    });
+    }
+     
 
     const user = await User.create(reqObject);
      
-   
-    if (!user) throw new AppError("Can't create account right now. Try again later", 500)
+
+    if (!user) throw new AppError("Can't create account right now. Try again later", 500);
     
     
     const attendanceList = await AttendanceModel.find();
@@ -166,10 +160,8 @@ exports.isloggedIn = catchAsync( async (req, res, next)=> {
 
     if (!user) throw new AppError("User not found. Please create a new account", 401);
 
-
     req.user = user;
 
-    
  next();
 } )
 

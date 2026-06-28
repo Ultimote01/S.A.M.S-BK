@@ -27,7 +27,7 @@ exports.createId = async function (role) {
         const user = await User.findOne({id})
         if (!user) {
              break;
-        }else if (user) { 
+     }else if (user) { 
              id = role === "student"? "73"+generateDigits(7): "95"+generateDigits(5);
             break;
         }
@@ -36,6 +36,10 @@ exports.createId = async function (role) {
  return id;
 }
 
+
+exports.getTimezone = ()=> {
+    return new Date(Date.now()).toString().split("GMT")[1].split(' ')[0];
+}
 
 exports.createEmail = createEmail;
 exports.getRandomNumber = getRandomNumber;

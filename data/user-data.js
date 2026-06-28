@@ -78,7 +78,7 @@
          password: "test1234",
          role: "lecturer",
          department: "physical science",
-         courses: ["DSA", "Ariticial Intelligence"]
+         courses: ["DSA", "Artificial Intelligence"]
      },
       {
          fullName: "Kemi Jhonson",

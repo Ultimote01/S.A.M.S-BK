@@ -46,14 +46,14 @@ lectureSchema.pre("validate", function(){
     const uniqueItems = new Set();
 
     this.classes.forEach((el)=> uniqueItems.add(el.course))
-    if (uniqueItems.size !== this.classes.length) throw new AppError("Duplicate found", 401);
+    if (uniqueItems.size !== this.classes.length) throw new AppError("Duplicate found", 403);
 })
 
  
 
-const LecturesModel = mongoose.model("Lectures", lectureSchema);
+const LectureModel = mongoose.model("Lectures", lectureSchema);
 
-module.exports =  LecturesModel;
+module.exports =  LectureModel;
 
 
 
