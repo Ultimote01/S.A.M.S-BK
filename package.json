@@ -2,8 +2,9 @@
     "name": "S.A.M.S-BK",
     "version": "1.0.1",
     "description": "It's an app built on  MERN stack that provides APIi to the S.A.M.S client",
-    "main": "srver.js",
+    "main": "server.js",
     "scripts": {
+        "start": "node server.js",
         "dev": "nodemon server.js",
         "debug": "ndb server.js"
     },
