@@ -9,7 +9,7 @@ const lectureRoute = require("./routes/lecturesRoute");
 const app = express();
 
  
-const allowedOrigins = ["http://localhost:5173"]
+const allowedOrigins = ["http://localhost:5173", "https://s-a-m-s-bk.onrender.com"]
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
