@@ -21,7 +21,8 @@ app.use(cors({
     return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'], 
-  allowedHeaders: ['Content-Type', 'Authorization',"X-CSRF-Token", 'X-Custom-Header'],
+  allowedHeaders: ['Content-Type', 'Authorization',"X-CSRF-Token", 
+    'X-Custom-Header','Access-Control-Allow-Origin'],
   credentials: true // cookies or sessions
 }));
 
