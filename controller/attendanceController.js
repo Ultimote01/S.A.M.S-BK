@@ -9,6 +9,7 @@ const { setUsersNotifcation } = require("./userController");
 const userModel = require('../models/usersModel');
 
 
+
 exports.getAttendances = catchAsync(async (req, res, next)=>{
     
     const attendanceList = await AttendanceModel.aggregate([
@@ -193,9 +194,9 @@ exports.createAttendanceList = catchAsync( async (req, res, next)=> {
      }
     
       
-
   
-    QRCode.toDataURL(`https://s-a-m-s-8ozz.vercel.app/mark-attendance-offline/${lectureActive[0].course}`, function (err, url) {
+  
+    QRCode.toDataURL(`https://s-a-m-s-8ozz.vercel.app/mark-attendance-offline/${encodeURIComponent(lectureActive[0].course)}`, function (err, url) {
 
         if (err){
         return  res.status(500).json({
