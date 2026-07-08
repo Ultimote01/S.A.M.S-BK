@@ -9,8 +9,20 @@ const { setUsersNotifcation } = require("./userController");
 const userModel = require('../models/usersModel');
 
 
+exports.getAllAttendances= catchAsync( async (req, res, next)=>{
+    
+    const attendanceList = await AttendanceModel.find({},{_id:0});
 
-exports.getAttendances = catchAsync(async (req, res, next)=>{
+    res.status(200).json({
+        status: "success",
+        length:attendanceList.length,
+        attendanceList
+         
+    })
+ 
+})
+
+exports.getAttendancesByCourses = catchAsync(async (req, res, next)=>{
     
     const attendanceList = await AttendanceModel.aggregate([
   
@@ -38,7 +50,9 @@ exports.getAttendances = catchAsync(async (req, res, next)=>{
 
     res.status(200).json({
         status: "success",
+        length:attendanceList.length,
         attendanceList
+         
     })
 
 

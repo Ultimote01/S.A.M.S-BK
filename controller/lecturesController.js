@@ -7,14 +7,6 @@ const catchAsync = require("./catchAsync");
 
 exports.createLecture = catchAsync(async (req, res, next)=> {
 
-    console.log( {
-                course: req.body.course,
-                lecturer: req.user.fullName,
-                mode:req.body.mode,
-                startTime: req.body.startTime,
-                createdAt: req.body.createdAt,
-                endTime: req.body.endTime
-            })
 
     if (req.user.role.toLowerCase() === "student") throw new AppError("You don't have the permission to perform this task", 401);
 
