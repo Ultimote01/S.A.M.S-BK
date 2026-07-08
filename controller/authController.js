@@ -7,6 +7,7 @@ const AttendanceModel = require("../models/atttendanceModel");
 const AppError = require("../utils/appError");
 const { createId, createEmail} = require("../utils/helperFn");
 const catchAsync = require("./catchAsync");
+const userModel = require("../models/usersModel");
  
  
 
@@ -45,9 +46,9 @@ exports.signIn = catchAsync( async (req, res, next)=>{
     });
 
  
-    const passwordCoreect = await promisify(bcryptjs.compare)(req.body.password, user.password);
+    const passwordCorrect = await promisify(bcryptjs.compare)(req.body.password, user.password);
     
-    if (!passwordCoreect) throw new AppError("Incorrect Password. Please provide a valid password", 401);
+    if (!passwordCorrect) throw new AppError("Incorrect Password. Please provide a valid password", 401);
 
 
     
@@ -164,6 +165,35 @@ exports.isloggedIn = catchAsync( async (req, res, next)=> {
 
  next();
 } )
+
+
+exports.updatePassword = catchAsync(async (req, res, next)=> {
+    
+    if (!req.body?.password) throw new  AppError('Please provide a password', 403);
+
+    const user = await userModel.findById(req.user._id);
+    const passwordCorrect = await promisify(bcryptjs.compare)(req.body.password, user.password);
+
+    if (passwordCorrect) throw new AppError('Please provide a new password', 403);
+ 
+
+    const hash = await bcryptjs.hash(req.body.password, 12);
+    const updatedQuery = await User.updateOne(
+        {
+        id: req.user.id
+        },
+        {
+            $set:{password: hash }
+        }
+    )
+
+    if (updatedQuery.modified === 0) throw new AppError('', 500);
+
+    res.status(200).json({
+        status: 'success',
+        message: 'password updated successfully'
+    })
+})
 
 
 

@@ -4,13 +4,8 @@ const mongoose = require("mongoose");
 const classSchema = new mongoose.Schema({
     course: {
         type: String,
-        required: true
-    },
-    id:{
-        type: String,
-        required: [true, 'ID is required to initiate attendance list'],
-        maxLength: [10, 'ID length must not be greater 10 chars'],
-        minLength: [10,'ID length must not be lesser than 10 chars']
+        required: true,
+        unique: true
     },
     lecturer: {
         type: String,

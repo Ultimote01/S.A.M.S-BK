@@ -5,6 +5,17 @@ const bcrypt = require("bcryptjs");
 const catchAsync = require("../controller/catchAsync")
 const AppError = require("../utils/appError");
 
+const notification = new mongoose.Schema({
+   message: {
+      type: String,
+      maxLength: [20, 'Message must not be loger than 20 chars']
+   },
+   webhook: {
+      type: String,
+      maxLength: [20, 'webhook must not be longer than 20 chars']
+   }
+},{ _id: false })
+
 
 const userSchema = new  mongoose.Schema({
  fullName: {
@@ -35,7 +46,8 @@ const userSchema = new  mongoose.Schema({
  courses:{
     required: true,
     type:[String],
- }
+ },
+ notifications: [notification]
 },
 {
    toString: true,
@@ -58,10 +70,8 @@ userSchema.pre("save", async function () {
 
 )
 
-
-
-
 const userModel =  mongoose.model("User", userSchema);
+
 
 module.exports = userModel;
 

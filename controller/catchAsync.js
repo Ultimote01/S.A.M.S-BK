@@ -7,7 +7,7 @@ return (req, res, next )=> {
         if (err.message.includes("duplicate key error collection")){
            return res.status(403).json({
             status: "fail",
-            message: "User already exist"
+            message: "Document already exist"
         })
         }
 

@@ -35,7 +35,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
 
         await createdLecture.save();
         createdLecture.classes =  createdLecture.classes.slice(-1);
-        res.status(200).json({
+        res.status(201).json({
         status: "success",
         lecture: createdLecture,
         message: "Class added"
@@ -54,7 +54,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
                 endTime: req.body.endTime
             }
             });
-        res.status(200).json({
+        res.status(201).json({
         status: "success",
         lecture: lecture,
         message: "Class created"
@@ -69,7 +69,7 @@ const getEligibleLectures = async function(courses, today) {
     const lectures = LectureModel.aggregate([
   
         {
-            $match: {
+        $match: {
             ...today,
             "classes": {$elemMatch: {"course": {$in: courses}}},
             },
@@ -97,14 +97,14 @@ const getEligibleLectures = async function(courses, today) {
 
 exports.getLectures = catchAsync(async (req, res, next)=> {
 
-
+    
     let lectures = [];
     const resetTimeHour = new Date(Date.now()).toISOString().split("T")[1].split(":");
     const openingTime=  Date.now()- (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
                         (Number(resetTimeHour[1]) * 60 * 1000)-(Number(resetTimeHour[2].split(".")[0])*1000)-
                         (Number(resetTimeHour[2].split(".")[1].replace("Z", "")));
   
- 
+
     if (req.query.day ==="today"){
 
         lectures = await getEligibleLectures(req.user.courses, {date: new Date(openingTime)});
@@ -115,7 +115,9 @@ exports.getLectures = catchAsync(async (req, res, next)=> {
     
     if (lectures.length !== 0){
         lectures.forEach((lecture)=>{
-            lecture.classesPerDay = lecture.classesPerDay.filter((el)=> new Date(el.endTime).valueOf() >  Date.now())
+            lecture.classesPerDay = lecture.classesPerDay.filter((el)=> new Date(
+                req.query.day ==="today"? el.endTime : el.startTime
+            ).valueOf() >  Date.now())
             
         })
     }

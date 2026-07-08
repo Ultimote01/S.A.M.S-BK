@@ -17,6 +17,8 @@ router.post("/create-attendance",authController.isloggedIn,
     attendanceController.createAttendanceList
 )
 
+router.post("/mark-attendance-physical", attendanceController.markAttendancePhysicalClass)
 
+router.get("/attendanceListPerClass/:course", attendanceController.getAttendancePerClass)
 
 module.exports = router;

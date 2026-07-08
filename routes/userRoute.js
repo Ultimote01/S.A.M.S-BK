@@ -15,6 +15,11 @@ router.post("/login", authController.signIn);
 
 router.post("/logout", authController.logout);
 
+router.patch('/update-me', authController.isloggedIn,  userController.updateMe)
+
+router.patch("/updateMyPassword", authController.isloggedIn,
+    authController.updatePassword
+)
 
 
 module.exports = router;
