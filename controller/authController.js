@@ -48,7 +48,7 @@ exports.signIn = catchAsync( async (req, res, next)=>{
  
     const passwordCorrect = await promisify(bcryptjs.compare)(req.body.password, user.password);
     
-    if (!passwordCorrect) throw new AppError("Incorrect Password. Please provide a valid password", 401);
+    if (!passwordCorrect) throw new AppError("Incorrect Password || Email", 401);
 
 
     
