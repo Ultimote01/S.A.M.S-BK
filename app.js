@@ -9,7 +9,7 @@ const lectureRoute = require("./routes/lecturesRoute");
 const app = express();
 
  
-const allowedOrigins = ["http://localhost:5173", "https://s-a-m-s-bk.onrender.com"]
+const allowedOrigins = ["http://localhost:5173", "https://s-a-m-s-8ozz.vercel.app"]
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -22,7 +22,8 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'], 
   allowedHeaders: ['Content-Type', 'Authorization',"X-CSRF-Token", 
-    'X-Custom-Header','Access-Control-Allow-Origin'],
+    'X-Custom-Header'],
+  
   credentials: true // cookies or sessions
 }));
 
