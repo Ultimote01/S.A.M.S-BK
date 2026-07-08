@@ -33,7 +33,7 @@ app.use(express.json());
  
 
 app.use((req, res, next)=> {
-    console.log("Middleware called", req.headers.origin);
+    console.log("Middleware called");
 
     next();
 })

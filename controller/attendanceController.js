@@ -195,7 +195,7 @@ exports.createAttendanceList = catchAsync( async (req, res, next)=> {
       
 
   
-    QRCode.toDataURL(`http://localhost:5173/mark-attendance-offline/${lectureActive[0].course}`, function (err, url) {
+    QRCode.toDataURL(`s-a-m-s-8ozz.vercel.app/mark-attendance-offline/${lectureActive[0].course}`, function (err, url) {
 
         if (err){
         return  res.status(500).json({
