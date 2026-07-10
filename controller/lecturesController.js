@@ -280,7 +280,7 @@ exports.deleteLecture = catchAsync(async (req, res, next)=>{
 
 
     const delResponse =  await LectureModel.findOneAndUpdate(
-        { date: ''},
+        { date: 'time'},
         {
             $pull: {
             subdocs: { _id: subdocId },
