@@ -1,8 +1,14 @@
 module.exports = (fn)=> {
 return (req, res, next )=> {
     fn(req, res, next).catch((err)=> {
-        console.log(err)
+        console.log(err.message)
 
+        if (err.message === 'jwt must be provided'){
+            return res.status(401).json({
+                status: "fail",
+                message: "Please login and try again."
+            })
+        }
         
         if (err.message.includes("duplicate key error collection")){
            return res.status(403).json({

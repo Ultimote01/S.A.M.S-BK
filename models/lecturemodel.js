@@ -10,9 +10,11 @@ const classes = new mongoose.Schema({
         required: true,
     },
     lecturer: {
-        type: String,
-        required: true,
-    },
+        //  Child  Referencing
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+        required: true
+      },
     mode: {
         type: String,
         required: true
