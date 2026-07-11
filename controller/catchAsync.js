@@ -16,31 +16,32 @@ return (req, res, next )=> {
             message: "Document already exist"
         })
         }
-
-        if (err.statusCode === 403){
-            return res.status(403).json({
-            status: "fail",
-            message: err.message
-        })
-        }
-
-        if (err.statusCode === 401){
-            return res.status(401).json({
-            status: "fail",
-            message: err.message
-            })
-        }
-
+ 
         if (err.message.includes("jwt expired")){
              return res.status(401).json({
             status: "fail",
             message: "Session expired. Log in and try later. "
             })
         }
+        let headerSent = false;
+        [401,404,403,400, 500].forEach((el, index, array) => {
 
-        res.status(500).json({
-            status: "fail",
-            message:"Something went wrong. Please try again.."
+            if (err.statusCode === el){
+                headerSent = true;
+                return res.status(el).json({
+                status: "fail",
+                message: err.message
+            })
+            
+            } else {
+                if (index === array.length-1 && !headerSent) {
+                     headerSent= true;
+                     res.status(500).json({
+                        status: "fail",
+                        message:"Something went wrong. Please try again.."
+                    })
+                }
+            }
         })
     });
 }

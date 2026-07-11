@@ -7,12 +7,61 @@ const catchAsync = require("./catchAsync");
 
 exports.createLecture = catchAsync(async (req, res, next)=> {
 
+    const modifiedRequestBody = {};
 
+    console.log(new Date(req.body.startTime) ,  new Date(Date.now()));
+ 
     if (req.user.role.toLowerCase() === "student") throw new AppError("You don't have the permission to perform this task", 401);
 
     const isUserCourse = req.user.courses.some((course)=> course === req.body.course) ;
     
     if (!isUserCourse) throw new AppError("You can only create a course that you teach", 403);
+
+    Object.keys(req.body).forEach((key)=>{
+       
+         if (!req.body[key]) throw new AppError(`${req.body[key]} must not be empty value`,403);
+
+        if(!req.body.createdAt) throw new AppError("You can't create lecture without current time", 403)
+
+        if (key === "course") modifiedRequestBody[key]= req.body[key];
+
+        if (key === 'mode' && req.body[key]){
+           if (["physical",'online'].indexOf(req.body.mode.toLowerCase()) > -1){
+             modifiedRequestBody[key]= req.body[key];
+           } else throw new AppError(`${req.body[key]} is not a valid mode.`, 403);
+        }
+
+        if (key === "startTime"){
+            if (isNaN(new Date(req.body.startTime).valueOf())){
+                throw new AppError("Start time is an invalid date format", 403);
+            }
+            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (3 * 60 * 1000))) {
+                  throw new AppError(`Start time must be atleast 3 minutes ahead of your current time`, 403);
+            }
+            else if (new Date(req.body.startTime).valueOf() >  new Date( req.body['endTime']).valueOf()) {
+                    throw new AppError(`Start time must be earlier than end time`, 403);
+
+            }else   modifiedRequestBody[key]= req.body[key];
+        }
+
+        if (key === "createdAt"){
+            if(isNaN(new Date(req.body.createdAt).valueOf())){
+                throw new AppError("Lecture created  with an invalid date format", 403);
+            }
+            else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime']).valueOf()){
+                throw new AppError(`Lecture must be created before startTime`, 403);
+            }
+            else  modifiedRequestBody[key]= req.body[key];
+        }
+
+        if (key === "endTime"){
+            if(isNaN(new Date(req.body.endTime).valueOf())){
+                throw new AppError("End time is an invalid date format", 403);
+            } else if (new Date(req.body.endTime).valueOf() <= new Date( req.body['startTime']).valueOf()){
+                throw new AppError('End time must be greater than start time', 403);
+            }else  modifiedRequestBody[key]= req.body[key];
+        }
+    })  
 
    
 
@@ -38,9 +87,9 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
          const lectureObj = {date: createdLecture.date, _id: createdLecture._id, classes: createdLecture.classes} 
         const qk = lectureObj.classes.slice(-1)[0];
         lectureObj.classes= [{course: qk.course,lecturer: req.user.fullName,mode: qk.mode,
-        startTime: qk.startTime,createdAt: qk.created, endTime: qk.endTime}];
+        startTime: qk.startTime,createdAt: qk.createdAt, endTime: qk.endTime, _id: qk._id}];
 
-        res.status(201).json({
+        return res.status(201).json({
         status: "success",
         lecture: lectureObj,
         message: "Class added"
@@ -63,14 +112,20 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
         const lectureObj = {date: lecture.date, _id: lecture._id, classes: lecture.classes} 
         const qk = lectureObj.classes.slice(-1)[0];
         lectureObj.classes= [{course: qk.course,lecturer: req.user.fullName,mode: qk.mode,
-        startTime: qk.startTime,createdAt: qk.created, endTime: qk.endTime}];
+        startTime: qk.startTime,createdAt: qk.createdAt, endTime: qk.endTime,_id: qk._id}];
 
-        res.status(201).json({
+        return res.status(201).json({
         status: "success",
         lecture:lectureObj,
         message: "Class created"
     })
     }
+
+  return res.status(501).json({
+    status: "fail",
+    message: "Not created"
+  })
+
 
 })
 
@@ -174,7 +229,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
     const lecture =lectureQuery?.classes[0]?? {};
   
 
-    if (!lecture) throw new AppError("You can only edit an avaiable lecture", 403);
+    if (!lecture) throw new AppError("You can only edit an avaiable lecture", 404);
 
     if (!req.user.courses.some((course)=> course === lecture.course)) 
         throw new AppError("You are not eligible to create this course", 403);
@@ -182,7 +237,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
     if (!req.user.courses.some((course)=> course === lecture.course))
         throw new AppError("You are not eligible to eidit this course", 403);
 
-    console.log(new Date( req.body['endTime']), req.body);
+  
     Object.keys(req.body).forEach((key)=>{
        
          if (!req.body[key]) throw new AppError(`${req.body[key]} must not be empty value`,403);
@@ -214,7 +269,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             if(isNaN(new Date(req.body.createdAt).valueOf())){
                 throw new AppError("Lecture created  with an invalid date format", 403);
             }
-            else if (new Date(req.body.createdAt).valueOf() < Date.now()){
+            else if (new Date(req.body.createdAt).valueOf() < (Date.now() + (1 * 60 * 1000))){
                     throw new AppError(`Lecture must be created before event`, 403);
 
             }else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime'] ?? lecture.startTime).valueOf()){
@@ -274,20 +329,58 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
         }
     )
 
-})
+}) 
 
 exports.deleteLecture = catchAsync(async (req, res, next)=>{
 
+     const lectureQuery = await LectureModel.findOne(
+        {
+            date: req.body.deleteLectureCreatedAt,
+            "classes._id": {$eq: req.body._id}
+        },
+         {
+             "classes.$": 1,
+        }
+       );
 
-    const delResponse =  await LectureModel.findOneAndUpdate(
-        { date: 'time'},
+       if (lectureQuery === null){
+        throw new AppError("You can only delete an existing lecture", 404);
+       }
+
+    const  isUpcoming = lectureQuery.classes.filter((el)=> {
+      
+        if (new Date(el.startTime).valueOf() >= Date.now()) false;
+
+        return true;
+    })
+
+
+
+    if (isUpcoming.length === 0) throw new AppError('You can only delete an upcoming lecture', 400)
+
+
+    const delResponse =  await LectureModel.updateOne(
+        { date: req.body.deleteLectureCreatedAt},
         {
             $pull: {
-            subdocs: { _id: subdocId },
+            classes: { _id: req.body._id },
             },
         },
         { new: true }
         );
+
+        if (delResponse.acknowledged === true) {
+            if (delResponse.modifiedCount === 1) {
+                return res.status(204).json({
+                    status: 'success'
+                });
+            }
+        }
+
+        res.status(304).json({
+            status: 'fail',
+            message: "Can't complete your request. Check the value and try again"
+        })
 })
 
 
