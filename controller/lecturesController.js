@@ -35,7 +35,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
             if (isNaN(new Date(req.body.startTime).valueOf())){
                 throw new AppError("Start time is an invalid date format", 403);
             }
-            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (3 * 60 * 1000))) {
+            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (2 * 60 * 1000))) {
                   throw new AppError(`Start time must be atleast 3 minutes ahead of your current time`, 403);
             }
             else if (new Date(req.body.startTime).valueOf() >  new Date( req.body['endTime']).valueOf()) {
@@ -98,7 +98,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
         
     }else{
         const lecture = await LectureModel.create({
-            date: req.body.startTime.split("T")[0],
+            date: `${req.body.startTime.split("T")[0]}T00:00:00Z`,
             classes:  {
                 course: req.body.course,
                 lecturer: req.user._id,
@@ -256,8 +256,8 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             if (isNaN(new Date(req.body.startTime).valueOf())){
                 throw new AppError("Start time is an invalid date format", 403);
             }
-            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (5 * 60 * 1000))) {
-                  throw new AppError(`Start time must be atleast 5 minutes ahead of your current time`, 403);
+            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (2 * 60 * 1000))) {
+                  throw new AppError(`Start time must be atleast 3 minutes ahead of your current time`, 403);
             }
             else if (new Date(req.body.startTime).valueOf() >  new Date( req.body['endTime'] ?? lecture.endTime).valueOf()) {
                     throw new AppError(`Start time must be earlier than end time`, 403);
@@ -289,7 +289,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
         }
     })  
     
-    console.log(modifiedRequestBody, {...lecture,...modifiedRequestBody});
+
 
      const setFields = Object.fromEntries(
         Object.entries(modifiedRequestBody).map(([key, value]) => [
@@ -343,6 +343,7 @@ exports.deleteLecture = catchAsync(async (req, res, next)=>{
         }
        );
 
+       console.log(lectureQuery)
        if (lectureQuery === null){
         throw new AppError("You can only delete an existing lecture", 404);
        }
@@ -353,7 +354,7 @@ exports.deleteLecture = catchAsync(async (req, res, next)=>{
 
         return true;
     })
-
+ 
 
 
     if (isUpcoming.length === 0) throw new AppError('You can only delete an upcoming lecture', 400)
