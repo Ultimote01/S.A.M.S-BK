@@ -11,6 +11,23 @@ const createEmail = function(fullname) {
     return email;
 }
 
+exports.createStringTitle =  function (string) {
+    return String(string).charAt(0).toUpperCase()+String(string).slice(1);
+}
+
+
+exports.convertDateNowToUTC = function(){
+    const timeZoneOffSet = String(new Date(Date.now()).getTimezoneOffset());
+    const timeZoneOffSetHour = ['+', '-'].indexOf(timeZoneOffSet.slice(0,1)) > -1? 
+    timeZoneOffSet.slice(1, -1): timeZoneOffSet;
+    const timeZoneOffSetSign = ['+', '-'].indexOf(timeZoneOffSet.slice(0,1)) > -1? 
+    timeZoneOffSet.slice(0,1): null;
+
+    if (timeZoneOffSetSign === '-') return (Date.now()-(timeZoneOffSetHour));
+    if (timeZoneOffSetSign === '+') return (Date.now()+(timeZoneOffSetHour));
+
+    return Date.now(); 
+}
 
 
 exports.createId = async function (role) {

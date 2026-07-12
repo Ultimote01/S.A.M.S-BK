@@ -89,8 +89,8 @@ exports.signIn = catchAsync( async (req, res, next)=>{
 
 exports.signUp = catchAsync(async (req, res, next )=>{
    
-    const id = req.body?.id? req.body.id: await createId(req.body?.role);
-    const email = req.body?.email? req.body.email : createEmail(req.body?.fullName).toLowerCase();
+    const id = req.body?.sudo? await createId(req.body?.role) : req.body.id;
+    const email = req.body?.sudo? createEmail(req.body?.fullName).toLowerCase() : req.body.email;
     const fullName = req.body?.fullName?? `${req.body.firstname} ${req.body.lastname}`
     const reqObject = {fullName,email,id, role:req.body?.role,
         password: req.body.password,

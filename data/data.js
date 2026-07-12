@@ -8,12 +8,13 @@ function createAttendanceDb (){
     connectDatabase().then(async ()=> {
         const usersDb = await User.find();
         users = usersDb;
-        const attendance= createAttendance()[0];
+       
         
-        Promise.all(createAttendance().map(async (attendance)=>{
+        Promise.all(createAttendance().map(async (attendance, index)=>{
+           
               const attendanceList = await AttendanceModel.create({
                 date: attendance[0].createdAt,
-                classes: attendance
+                // classes: attendance
             })
         })).catch(err=> console.log(err)).finally(()=> process.exit(0));
     }).catch(err=> console.log(err));
@@ -84,8 +85,13 @@ function createAttendance(){
 
             
             for (let i = 0; i < coursePerday ; i++){
+                 const lTSplit = ( new Date(Date.now())).toLocaleTimeString().split(":");
+                let resetTimeIso= Date.now() - ( Number( lTSplit[0])* 60 * 60 * 1000 ) -
+                ( Number( lTSplit[1])  * 60 * 1000) - (Number( lTSplit[2].slice(0,2)) * 1000);
+                
+
                 const resetTimeHour = Number(( new Date(Date.now())).toLocaleTimeString().split(":")[0]);
-                let openingTime=  Date.now()- (resetTimeHour * 60 * 60 * 1000 ) + (9 * 60 * 60 * 1000);
+                let openingTime=  Date.now() - (resetTimeHour * 60 * 60 * 1000 );
                 
                 while (true) {
                     
@@ -102,10 +108,10 @@ function createAttendance(){
                          todayLectures.push({
                             course:  courseName,
                             lecturer: lecturer.fullName,
-                            students: getUserStudents(),
+                            // students: getUserStudents(),
                             mode: modes[getRandomNumber(0, 2)],
                             startTime: openingTime + ((exceedingTimePerCourse * (coursePerdayAd - 1)) * 60 * 60 * 1000),
-                            createdAt: Date.now() - (x * 24 * 60 * 60 * 1000),
+                            createdAt: resetTimeIso - ( x * 24 * 60 * 60 * 1000),
                             endTime:  openingTime + ((exceedingTimePerCourse * coursePerdayAd) * 60 * 60 * 1000)
                         }) 
                          
@@ -121,6 +127,7 @@ function createAttendance(){
                 
            
             }
+            // console.log(todayLectures)
             attendanceList.push(todayLectures);
              
       

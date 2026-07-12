@@ -1,6 +1,6 @@
 const LectureModel = require("../models/lecturemodel");
 const AppError = require("../utils/appError");
-const { getTimezone } = require("../utils/helperFn");
+const { getTimezone, createStringTitle, convertDateNowToUTC } = require("../utils/helperFn");
 const catchAsync = require("./catchAsync");
 
 
@@ -8,8 +8,12 @@ const catchAsync = require("./catchAsync");
 exports.createLecture = catchAsync(async (req, res, next)=> {
 
     const modifiedRequestBody = {};
-
-    console.log(new Date(req.body.startTime) ,  new Date(Date.now()));
+      console.log( new Date(req.body.createdAt), new Date(convertDateNowToUTC())
+    );
+    ['mode','startTime','endTime','createdAt','course'].forEach((el)=> {
+        if (Object.keys(req.body).indexOf(el) === -1 )
+            throw new AppError(`${createStringTitle(el)} field is required to create a  lecture`, 403);
+    })
  
     if (req.user.role.toLowerCase() === "student") throw new AppError("You don't have the permission to perform this task", 401);
 
@@ -35,7 +39,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
             if (isNaN(new Date(req.body.startTime).valueOf())){
                 throw new AppError("Start time is an invalid date format", 403);
             }
-            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (2 * 60 * 1000))) {
+            else if (new Date(req.body.startTime).valueOf() < (convertDateNowToUTC() + (2 * 60 * 1000))) {
                   throw new AppError(`Start time must be atleast 3 minutes ahead of your current time`, 403);
             }
             else if (new Date(req.body.startTime).valueOf() >  new Date( req.body['endTime']).valueOf()) {
@@ -51,7 +55,9 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
             else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime']).valueOf()){
                 throw new AppError(`Lecture must be created before startTime`, 403);
             }
-            else  modifiedRequestBody[key]= req.body[key];
+             else if (new Date(req.body.createdAt).valueOf() >  (convertDateNowToUTC())){
+                    throw new AppError(`Lecture must be created before event`, 403);
+             }else  modifiedRequestBody[key]= req.body[key];
         }
 
         if (key === "endTime"){
@@ -271,7 +277,6 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             }
             else if (new Date(req.body.createdAt).valueOf() < (Date.now() + (1 * 60 * 1000))){
                     throw new AppError(`Lecture must be created before event`, 403);
-
             }else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime'] ?? lecture.startTime).valueOf()){
                 throw new AppError(`Lecture must be created before startTime`, 403);
             }
