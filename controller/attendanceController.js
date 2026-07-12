@@ -7,6 +7,7 @@ const catchAsync = require("./catchAsync");
 const { getEligibleLectures } = require("./lecturesController");
 const { setUsersNotifcation } = require("./userController");
 const userModel = require('../models/usersModel');
+const { convertDateNowToUTC } = require('../utils/helperFn');
 
 
 exports.getAllAttendances= catchAsync( async (req, res, next)=>{
@@ -61,8 +62,8 @@ exports.getAttendancesByCourses = catchAsync(async (req, res, next)=>{
 
 
 function getOpenningTime() {
-    const resetTimeHour = new Date(Date.now()).toISOString().split("T")[1].split(":");
-    const openingTime=  Date.now()- (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
+    const resetTimeHour = new Date(convertDateNowToUTC()).toISOString().split("T")[1].split(":");
+    const openingTime=  convertDateNowToUTC() - (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
                         (Number(resetTimeHour[1]) * 60 * 1000)-(Number(resetTimeHour[2].split(".")[0])*1000)-
                         (Number(resetTimeHour[2].split(".")[1].replace("Z", "")));
     return openingTime;         
@@ -72,8 +73,8 @@ function getOpenningTime() {
 function checkLectureValidity(lectures,course){
         
     if (lectures?.length > 0){
-        lectures= lectures.filter((el)=> new Date(el.endTime).valueOf() >   Date.now() &&
-        Date.now() >  new Date(el.startTime).valueOf() ).
+        lectures= lectures.filter((el)=> new Date(el.endTime).valueOf() >   convertDateNowToUTC() &&
+       convertDateNowToUTC() >  new Date(el.startTime).valueOf() ).
         filter((elem)=> elem.course === course);
 
         return lectures;
@@ -192,11 +193,11 @@ exports.createAttendanceList = catchAsync( async (req, res, next)=> {
      
     if (existAttendanceList !== null) {
         attendanceList = await handleUpdateAttendance(existAttendanceList._id
-        ,{...lectureActive[0], createdAt: new Date(Date.now()), students: []});
+        ,{...lectureActive[0], createdAt: new Date(convertDateNowToUTC()), students: []});
          
     }else if (existAttendanceList === null) {
          attendanceList = await AttendanceModel.create({date: new Date(getOpenningTime()),
-         classes: {...lectureActive[0],createdAt: new Date(Date.now()), students: []}
+         classes: {...lectureActive[0],createdAt: new Date(convertDateNowToUTC()), students: []}
     });
     }
     

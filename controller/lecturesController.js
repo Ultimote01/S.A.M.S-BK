@@ -170,8 +170,8 @@ const getEligibleLectures = async function(courses, today) {
 exports.getUpcomingLectures = catchAsync(async (req, res, next)=> {
 
     let lectures = [];
-    const resetTimeHour = new Date(Date.now()).toISOString().split("T")[1].split(":");
-    const openingTime=  Date.now()- (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
+    const resetTimeHour = new Date(convertDateNowToUTC()).toISOString().split("T")[1].split(":");
+    const openingTime=  convertDateNowToUTC()- (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
                         (Number(resetTimeHour[1]) * 60 * 1000)-(Number(resetTimeHour[2].split(".")[0])*1000)-
                         (Number(resetTimeHour[2].split(".")[1].replace("Z", "")));
   
@@ -186,7 +186,7 @@ exports.getUpcomingLectures = catchAsync(async (req, res, next)=> {
         lectures.forEach((lecture)=>{
             lecture.classesPerDay = lecture.classesPerDay.filter((el)=> new Date(
                 req.query.day ==="today"? el.endTime : el.startTime
-            ).valueOf() >  Date.now());
+            ).valueOf() >  convertDateNowToUTC());
             lecture.classesPerDay.map((el)=>{
                 el.lecturer= req.user.fullName;
                 return el;
@@ -262,7 +262,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             if (isNaN(new Date(req.body.startTime).valueOf())){
                 throw new AppError("Start time is an invalid date format", 403);
             }
-            else if (new Date(req.body.startTime).valueOf() < (Date.now() + (2 * 60 * 1000))) {
+            else if (new Date(req.body.startTime).valueOf() < (convertDateNowToUTC() + (2 * 60 * 1000))) {
                   throw new AppError(`Start time must be atleast 3 minutes ahead of your current time`, 403);
             }
             else if (new Date(req.body.startTime).valueOf() >  new Date( req.body['endTime'] ?? lecture.endTime).valueOf()) {
@@ -275,7 +275,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             if(isNaN(new Date(req.body.createdAt).valueOf())){
                 throw new AppError("Lecture created  with an invalid date format", 403);
             }
-            else if (new Date(req.body.createdAt).valueOf() < (Date.now() + (1 * 60 * 1000))){
+            else if (new Date(req.body.createdAt).valueOf() < (convertDateNowToUTC() + (1 * 60 * 1000))){
                     throw new AppError(`Lecture must be created before event`, 403);
             }else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime'] ?? lecture.startTime).valueOf()){
                 throw new AppError(`Lecture must be created before startTime`, 403);
@@ -286,7 +286,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
         if (key === "endTime"){
             if(isNaN(new Date(req.body.endTime).valueOf())){
                 throw new AppError("End time is an invalid date format", 403);
-            } else if (new Date(req.body.endTime).valueOf() < (Date.now()+ (2 * 60 * 1000))){
+            } else if (new Date(req.body.endTime).valueOf() < (convertDateNowToUTC()+ (2 * 60 * 1000))){
                 throw new AppError("End time must be atleast 2 minutes ahead of your current time", 403);
             }else if (new Date(req.body.endTime).valueOf() <= new Date( req.body['startTime'] ?? lecture.startTime).valueOf()){
                 throw new AppError('End time must be greater than start time', 403);
@@ -355,7 +355,7 @@ exports.deleteLecture = catchAsync(async (req, res, next)=>{
 
     const  isUpcoming = lectureQuery.classes.filter((el)=> {
       
-        if (new Date(el.startTime).valueOf() >= Date.now()) false;
+        if (new Date(el.startTime).valueOf() >= convertDateNowToUTC()) false;
 
         return true;
     })

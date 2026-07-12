@@ -5,7 +5,7 @@ const bcryptjs = require("bcryptjs");
 const User = require("../models/usersModel");
 const AttendanceModel = require("../models/atttendanceModel");
 const AppError = require("../utils/appError");
-const { createId, createEmail} = require("../utils/helperFn");
+const { createId, createEmail, convertDateNowToUTC} = require("../utils/helperFn");
 const catchAsync = require("./catchAsync");
 const userModel = require("../models/usersModel");
  
@@ -26,7 +26,7 @@ function createSession(res, token){
  
     return res.cookie("jwt",token,{
       expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000),
+     convertDateNowToUTC() + process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000),
       httpOnly: true,
       sameSite: "strict",
       secure: process.env.mode === "prod"? true : false
@@ -201,7 +201,7 @@ exports.logout = catchAsync( async (req, res, next)=> {
 
     res.cookie("jwt", undefined,{
         expires: new Date(
-      Date.now() - process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000),
+      convertDateNowToUTC() - process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000),
     }).status(200).json({
         status: "success"
     })
