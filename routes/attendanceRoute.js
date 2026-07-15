@@ -13,19 +13,28 @@ router.get("/",
     authController.isloggedIn,
     attendanceController.getAllAttendances);
 
-router.post("/create-attendance",authController.isloggedIn,
-    attendanceController.createAttendanceList
-)
-
-// router.patch("edit-attendance",)
-
-// router.delete("delete-attendance")
-
-
-router.post("/mark-attendance-physical", attendanceController.markAttendancePhysicalClass)
-
 router.get("/attendanceListPerClass/:course", 
 authController.isloggedIn,
-attendanceController.getAttendancePerClass)
+attendanceController.getAttendancePerClass);
+
+router.get("/getAttendanceByCourses", 
+    authController.isloggedIn,
+    attendanceController.getAttendancesByCourses
+)
+
+
+router.post("/create-attendance",authController.isloggedIn,
+    attendanceController.createAttendanceList
+);
+
+
+
+router.post("/mark-attendance-online",
+authController.isloggedIn,
+attendanceController.markAttendanceOnlineClass);
+
+router.post("/mark-attendance-physical", attendanceController.markAttendancePhysicalClass);
+
+ 
 
 module.exports = router;

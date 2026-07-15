@@ -27,6 +27,9 @@ const classes = new mongoose.Schema({
         type: Date,
         required: true
     },
+    modifiedAt: {
+        type: Date
+    },
     endTime: {
         type: Date,
         required: true

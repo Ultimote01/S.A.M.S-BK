@@ -1,12 +1,11 @@
 var QRCode = require('qrcode')
 
 const AttendanceModel =require("../models/atttendanceModel");
-const UserModel = require("../models/usersModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("./catchAsync");
 const { getEligibleLectures } = require("./lecturesController");
 const { setUsersNotifcation } = require("./userController");
-const userModel = require('../models/usersModel');
+const UserModel = require('../models/usersModel');
 const { convertDateNowToUTC } = require('../utils/helperFn');
 
 
@@ -14,9 +13,14 @@ exports.getAllAttendances= catchAsync( async (req, res, next)=>{
     
     const attendanceList = await AttendanceModel.find({},{_id:0});
 
+    const registeredStudents  = await UserModel.find({
+           "role": {$eq: "student"}
+    });
+
     res.status(200).json({
         status: "success",
         length:attendanceList.length,
+        registeredStudents,
         attendanceList
          
     })
@@ -48,10 +52,14 @@ exports.getAttendancesByCourses = catchAsync(async (req, res, next)=>{
             }
         }
         ]);
+   const registeredStudents  = await UserModel.find({
+           "role": {$eq: "student"}
+       });
 
     res.status(200).json({
         status: "success",
         length:attendanceList.length,
+        registeredStudents,
         attendanceList
          
     })
@@ -140,12 +148,83 @@ function checkLectureValidity(lectures,course){
         }
         );
 }
- 
+ exports.getStudentAttendanceLists = catchAsync(async (req, res, next)=>{
+
+    res.status(200).json({
+        status: 'success',
+        message: "runnning"
+    })
+ } )
 
 exports.createAttendanceList = catchAsync( async (req, res, next)=> {
 
-    if (req.user.role.toLowerCase() === 'student') {
-            const lectures = await getEligibleLectures(req.user.courses, {date: new Date(getOpenningTime())});
+     
+    if (req.user.role.toLowerCase() !==  "lecturer"){
+        throw new AppError("Only a lecturer can create an attendance list", 401);
+    }
+    const lectures = await getEligibleLectures(req.user.courses, {date: new Date(getOpenningTime())});
+    const lectureActive = checkLectureValidity(lectures[0]?.classesPerDay,req.body.course);
+
+ 
+    if (lectureActive?.length < 1) throw new AppError("You can only create attendance list for an ongoing lecture", 401);
+
+    let attendanceList = null;
+    const existAttendanceList = await AttendanceModel.findOne({date: new Date(getOpenningTime())});
+
+     
+    if (existAttendanceList !== null) {
+        attendanceList = await handleUpdateAttendance(existAttendanceList._id
+        ,{...lectureActive[0], createdAt: new Date(convertDateNowToUTC()), students: [], lecturer: req.user.fullName});
+         
+    }else if (existAttendanceList === null) {
+         attendanceList = await AttendanceModel.create({date: new Date(getOpenningTime()),
+         classes: {...lectureActive[0],createdAt: new Date(convertDateNowToUTC()), students: [], lecturer: req.user.fullName}
+    });
+    }
+    
+   
+    if (attendanceList?.date && lectureActive[0]?.mode.toLowerCase() === "online"  ||  attendanceList.modifiedCount > 0  && lectureActive[0]?.mode.toLowerCase() ){
+        await setUsersNotifcation({
+            message: `Register attendance for ${lectureActive[0].course}`
+         })
+     }
+    
+      
+  
+
+    QRCode.toDataURL(`https://s-a-m-s-8ozz.vercel.app/mark-attendance-offline/${encodeURIComponent(lectureActive[0].course)}`, function (err, url) {
+
+        if (err){
+        return  res.status(500).json({
+        status:'fail',
+        message: "Something occured. Please try again",
+        })
+        }
+
+        if (lectureActive[0].mode.toLowerCase() === 'online') {
+             return  res.status(200).json({
+             status: attendanceList?.date || attendanceList.modifiedCount > 0? 'success': "fail",
+             message: attendanceList?.date || attendanceList.modifiedCount > 0? "Attendance List online created": "Attendance Already exist",
+            });
+        }
+
+        return  res.status(200).json({
+        status: attendanceList?.date || attendanceList.modifiedCount > 0? 'success': "fail",
+        message: attendanceList?.date || attendanceList.modifiedCount > 0? "Attendance List pysical  created": "Attendance Already exist",
+        qrCode: attendanceList?.date || attendanceList.modifiedCount > 0? req.user.role === 'lecturer' ? url : undefined: ""
+        });
+
+    })
+
+
+})
+
+exports.markAttendanceOnlineClass = catchAsync( async (req, res, next)=> {
+
+    if (req.user.role.toLowerCase() !== 'student') 
+        throw new AppError("Only a student can mark an attendance list", 401);
+    
+    const lectures = await getEligibleLectures(req.user.courses, {date: new Date(getOpenningTime())});
             const lectureActive = checkLectureValidity(lectures[0]?.classesPerDay,req.body.course);
             if (lectureActive?.length < 1) throw new AppError("You can only mark an attendance for an ongoing lecture", 401);
 
@@ -176,74 +255,16 @@ exports.createAttendanceList = catchAsync( async (req, res, next)=> {
                 status: 'success',
                 message: 'Attendance list marked sucessfully'
             })
-    }
-
-    if (req.user.role.toLowerCase() !==  "lecturer"){
-        throw new AppError("Only a lecturer can create an attendance list", 401);
-    }
-    const lectures = await getEligibleLectures(req.user.courses, {date: new Date(getOpenningTime())});
-    const lectureActive = checkLectureValidity(lectures[0]?.classesPerDay,req.body.course);
-
- 
-    if (lectureActive?.length < 1) throw new AppError("You can only create attendance list for an ongoing lecture", 401);
-
-    let attendanceList = null;
-    const existAttendanceList = await AttendanceModel.findOne({date: new Date(getOpenningTime())});
-
-     
-    if (existAttendanceList !== null) {
-        attendanceList = await handleUpdateAttendance(existAttendanceList._id
-        ,{...lectureActive[0], createdAt: new Date(convertDateNowToUTC()), students: []});
-         
-    }else if (existAttendanceList === null) {
-         attendanceList = await AttendanceModel.create({date: new Date(getOpenningTime()),
-         classes: {...lectureActive[0],createdAt: new Date(convertDateNowToUTC()), students: []}
-    });
-    }
     
-   
-    if (attendanceList?.date && lectureActive[0]?.mode.toLowerCase() === "online"  ||  attendanceList.modifiedCount > 0  && lectureActive[0]?.mode.toLowerCase() ){
-        await setUsersNotifcation({
-            message: `Register attendance for ${lectureActive[0].course}`
-         })
-     }
-    
-      
-  
-    console.log("Attendance list",attendanceList);
-    QRCode.toDataURL(`https://s-a-m-s-8ozz.vercel.app/mark-attendance-offline/${encodeURIComponent(lectureActive[0].course)}`, function (err, url) {
-
-        if (err){
-        return  res.status(500).json({
-        status:'fail',
-        message: "Something occured. Please try again",
-        })
-        }
-
-        if (lectureActive[0].mode.toLowerCase() === 'online') {
-             return  res.status(201).json({
-             status: attendanceList?.date || attendanceList.modifiedCount > 0? 'success': "fail",
-             message: attendanceList?.date || attendanceList.modifiedCount > 0? "Attendance List online created": "Attendance Already exist",
-            });
-        }
-
-        return  res.status(201).json({
-        status: attendanceList?.date || attendanceList.modifiedCount > 0? 'success': "fail",
-        message: attendanceList?.date || attendanceList.modifiedCount > 0? "Attendance List pysical  created": "Attendance Already exist",
-        qrCode: attendanceList?.date || attendanceList.modifiedCount > 0? req.user.role === 'lecturer' ? url : undefined: ""
-        });
-
-    })
-
 
 })
 
-
 exports.markAttendancePhysicalClass = catchAsync(async (req, res, next)=> {
 
-        const user = await userModel.findOne({id: req.body.id});
+        const user = await UserModel.findOne({id: req.body.id});
 
         if (user === null) throw new AppError('You must be a student to mark an attendance', 401);
+
         const lectures = await getEligibleLectures(user.courses, {date: new Date(getOpenningTime())});
         const lectureActive = checkLectureValidity(lectures[0]?.classesPerDay,req.body.course);
         if (lectureActive?.length < 1) throw new AppError("You can only mark an attendance for an ongoing lecture", 401);
@@ -290,12 +311,16 @@ exports.markAttendancePhysicalClass = catchAsync(async (req, res, next)=> {
 exports.getAttendancePerClass = catchAsync( async (req, res, next)=> {
 
      const existAttendanceList = await getAttendancelist(new Date(getOpenningTime()), req.params.course);
+     const registeredStudents  = await UserModel.find({
+           "role": {$eq: "student"}
+       });
 
      if (existAttendanceList.length > 0) {
         const concludedClass = existAttendanceList[0].classesPerDay[0];
         return res.status(200).json({
             status: 'success',
-            concludedClass
+            concludedClass,
+            registeredStudents
         })
     }
         
