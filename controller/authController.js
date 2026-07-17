@@ -54,18 +54,7 @@ exports.signIn = catchAsync( async (req, res, next)=>{
     
     const token = createToken(user.id);
 
-    const attendanceList = await AttendanceModel.find();
     
-    const modifiedAttendanceList = attendanceList.map((el)=> {
-            return el.classes
-        }).flatMap((el)=> el).sort((a,b)=>{
-            if (a.createdAt < b.createdAt) {
-                return -1;
-            } else if (a.createdAt > b.createdAt){
-                return 1;
-            }
-        });
-
     const registeredStudents  = await User.find({
         "role": {$eq: "student"}
     });
@@ -79,7 +68,7 @@ exports.signIn = catchAsync( async (req, res, next)=>{
         status: "success",
         token,
         user,
-        attendanceList: modifiedAttendanceList,
+        attendanceList: [],
         registeredStudents: registeredStudents.length
     })
 });
@@ -120,17 +109,17 @@ exports.signUp = catchAsync(async (req, res, next )=>{
     if (!user) throw new AppError("Can't create account right now. Try again later", 500);
     
     
-    const attendanceList = await AttendanceModel.find();
+    // const attendanceList = await AttendanceModel.find();
     
-    const modifiedAttendanceList = attendanceList.map((el)=> {
-            return el.classes
-        }).flatMap((el)=> el).sort((a,b)=>{
-            if (a.createdAt < b.createdAt) {
-                return -1;
-            } else if (a.createdAt > b.createdAt){
-                return 1;
-            }
-        });
+    // const modifiedAttendanceList = attendanceList.map((el)=> {
+    //         return el.classes
+    //     }).flatMap((el)=> el).sort((a,b)=>{
+    //         if (a.createdAt < b.createdAt) {
+    //             return -1;
+    //         } else if (a.createdAt > b.createdAt){
+    //             return 1;
+    //         }
+    //     });
 
     const registeredStudents  = await User.find({
         "role": {$eq: "student"}
@@ -145,7 +134,7 @@ exports.signUp = catchAsync(async (req, res, next )=>{
         status: "success",
         token,
         user,
-        attendanceList: modifiedAttendanceList,
+        attendanceList: [],
         registeredStudents: registeredStudents.length
     })
 
