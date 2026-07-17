@@ -9,10 +9,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
 
     const modifiedRequestBody = {};
 
-   console.log( new Date(req.body.createdAt) ,  new Date(convertDateNowToUTC()+(2 * 60 * 1000)),
-    req.body);
-     
-
+    console.log(req.body);
     ['mode','startTime','endTime','createdAt','course'].forEach((el)=> {
         if (Object.keys(req.body).indexOf(el) === -1 )
             throw new AppError(`${createStringTitle(el)} field is required to create a  lecture`, 403);
@@ -224,7 +221,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
 
     if (req.user.role !== "lecturer") throw new AppError("Only a lecturer can edit a lecture", 403)
    
-
+    
     const lectureQuery = await LectureModel.findOne(
         {
             date: req.body.modifiedLectureStartTime,
@@ -307,7 +304,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
     );
 
   
-
+    console.log(setFields);
     const updatedLecture = await LectureModel.updateOne(
         {
             date: req.body.modifiedLectureStartTime,

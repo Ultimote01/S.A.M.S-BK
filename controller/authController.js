@@ -95,7 +95,10 @@ exports.signUp = catchAsync(async (req, res, next )=>{
     const reqObject = {fullName,email,id, role:req.body?.role,
         password: req.body.password,
         department: req.body?.department,
-        courses: req.body?.courses};
+        courses: req.body?.courses,
+        dob: req.body.dob,
+        gender: req.body.gender
+    };
 
     const userExist = await User.findOne({id: req.body.id});
 

@@ -47,7 +47,16 @@ const userSchema = new  mongoose.Schema({
     required: true,
     type:[String],
  },
+ dob: {
+   required: true,
+   type: String
+ },
+ gender: {
+   type: String,
+   required: true
+ },
  notifications: [notification]
+  
 },
 {
    toString: true,
