@@ -1,7 +1,7 @@
 module.exports = (fn)=> {
 return (req, res, next )=> {
     fn(req, res, next).catch((err)=> {
-        console.log(err.message)
+        console.log(err)
 
         if (err.message === 'jwt must be provided'){
             return res.status(401).json({

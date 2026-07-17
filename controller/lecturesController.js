@@ -10,7 +10,8 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
     const modifiedRequestBody = {};
 
    console.log( new Date(req.body.createdAt) ,  new Date(convertDateNowToUTC()),
-    req.body)
+    req.body);
+     
 
     ['mode','startTime','endTime','createdAt','course'].forEach((el)=> {
         if (Object.keys(req.body).indexOf(el) === -1 )
