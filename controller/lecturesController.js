@@ -58,7 +58,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
             else if(new Date(req.body.createdAt).valueOf() >=  new Date( req.body['startTime']).valueOf()){
                 throw new AppError(`Lecture must be created before startTime`, 403);
             }
-             else if (new Date(req.body.createdAt).valueOf() >  (convertDateNowToUTC())){
+             else if (new Date(req.body.createdAt).valueOf() >  (convertDateNowToUTC(2 * 60 * 1000))){
                     throw new AppError(`Lecture must be created before event`, 403);
              }else  modifiedRequestBody[key]= req.body[key];
         }
