@@ -9,7 +9,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
 
     const modifiedRequestBody = {};
 
-
+    new Date(req.body.createdAt) ,  new Date(convertDateNowToUTC())
     ['mode','startTime','endTime','createdAt','course'].forEach((el)=> {
         if (Object.keys(req.body).indexOf(el) === -1 )
             throw new AppError(`${createStringTitle(el)} field is required to create a  lecture`, 403);
