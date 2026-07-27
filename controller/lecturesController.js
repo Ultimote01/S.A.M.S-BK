@@ -9,7 +9,7 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
 
     const modifiedRequestBody = {};
 
-    console.log(req.body);
+
     ['mode','startTime','endTime','createdAt','course'].forEach((el)=> {
         if (Object.keys(req.body).indexOf(el) === -1 )
             throw new AppError(`${createStringTitle(el)} field is required to create a  lecture`, 403);
@@ -138,62 +138,99 @@ exports.createLecture = catchAsync(async (req, res, next)=> {
 
 
 const getEligibleLectures = async function(courses, today) {
+    let eligibleLectures = []
    
-    const lectures = LectureModel.aggregate([
-  
-        {
-        $match: {
-            ...today,
-            "classes": {$elemMatch: {"course": {$in: courses}}},
-            },
-        },
-
-        //Redefine the array to ONLY include matching sub-documents
-        {
-            $project: {
-                date: 1,
-                _id: 0,
-            // Filter the sub-document array
-            classesPerDay: {
-                $filter: {
-                input: "$classes",
-                as: "subDoc",
-                cond: { $in: ["$$subDoc.course", courses] }
-                }
-            }
-            }
+   
+    
+const lectures = await LectureModel.aggregate([
+  {
+    $match: {
+      ...today,
+      classes: {
+        $elemMatch: {
+          course: { $in: courses }
         }
-        ]);
-    return lectures;
+      }
+    }
+  },
+  {
+    $unwind: "$classes"
+  },
+  
+  {
+    $lookup: {
+      from: "users",
+      localField: "classes.lecturer",
+      foreignField: "_id",
+      as: "classes.lecturer"
+    }
+  },
+  {
+    $unwind: "$classes.lecturer"
+  },
+  {
+    $project: {
+      date: 1,
+      classesPerDay: "$classes"
+    }
+  }
+]);
+
+ if (lectures.length > 0){
+    for (let lecture of lectures) {
+        
+       const lectureExist = eligibleLectures.find((el)=> String(el?.date) === String(lecture.date));
+         
+       if (lectureExist){
+         eligibleLectures.forEach((el)=> {
+            if (el?.date  === lectureExist?.date) el.classesPerDay.push({...lecture.classesPerDay, lecturer: lecture.classesPerDay.lecturer.fullName})
+         })
+       }else{
+        eligibleLectures.push({
+            _id: lecture._id,
+            date: lecture.date,
+            classesPerDay: [{...lecture.classesPerDay, lecturer: lecture.classesPerDay.lecturer.fullName}] 
+        });
+       
+       }
+       
+    }
+    }
+
+
+return eligibleLectures;
 }
 
 
 exports.getUpcomingLectures = catchAsync(async (req, res, next)=> {
 
     let lectures = [];
+   
     const resetTimeHour = new Date(convertDateNowToUTC()).toISOString().split("T")[1].split(":");
     const openingTime=  convertDateNowToUTC()- (Number(resetTimeHour[0]) * 60 * 60 * 1000 )- 
                         (Number(resetTimeHour[1]) * 60 * 1000)-(Number(resetTimeHour[2].split(".")[0])*1000)-
                         (Number(resetTimeHour[2].split(".")[1].replace("Z", "")));
+
+   
   
     if (req.query.day ==="today"){
         lectures = await getEligibleLectures(req.user.courses, {date: new Date(openingTime)});
     }else{
          lectures = await getEligibleLectures(req.user.courses);
     }
-    
+
     if (lectures.length !== 0){
         lectures.forEach((lecture)=>{
             lecture.classesPerDay = lecture.classesPerDay.filter((el)=> new Date(
                 req.query.day ==="today"? el.endTime : el.startTime
             ).valueOf() >  convertDateNowToUTC());
             lecture.classesPerDay.map((el)=>{
-                el.lecturer= req.user.fullName;
                 return el;
             })
             
         })
     }
+
 
     res.status(200).json({
         status: "success",
@@ -230,10 +267,14 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
          {
              "classes.$": 1,
         }
-       );
+       ) .populate({
+            path: "classes.lecturer",
+            select: "fullName -_id"
+        });
+    
 
     const lecture =lectureQuery?.classes[0]?? {};
-
+   
     if (!lecture) throw new AppError("You can only edit an avaiable lecture", 404);
 
     if (!req.user.courses.some((course)=> course === lecture.course)) 
@@ -304,7 +345,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
     );
 
   
-    console.log(setFields);
+
     const updatedLecture = await LectureModel.updateOne(
         {
             date: req.body.modifiedLectureStartTime,
@@ -330,7 +371,7 @@ exports.editLecture = catchAsync( async (req, res, next)=>{
             updatedLecture: {
                 mode: lecture.mode,
                 course: lecture.course,
-                lecturer: req.user.fullName,
+                lecturer:  lecture.lecturer.fullName,
                 startTime: lecture.startTime,
                 createdAt: lecture.createdAt,
                 modifiedAt: lecture.modifiedAt,
