@@ -55,7 +55,8 @@ exports.getAttendancesByCourses = catchAsync(async (req, res, next)=>{
    const registeredStudents  = await UserModel.find({
            "role": {$eq: "student"}
        });
-
+    
+   
     res.status(200).json({
         status: "success",
         length:attendanceList.length,
@@ -250,7 +251,7 @@ exports.markAttendanceOnlineClass = catchAsync( async (req, res, next)=> {
             })
             }
 
-
+            console.log(req.body,attendanceMarked);
             return res.status(200).json({
                 status: 'success',
                 message: 'Attendance list marked sucessfully'
