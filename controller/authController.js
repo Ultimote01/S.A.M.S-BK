@@ -77,6 +77,7 @@ exports.signIn = catchAsync( async (req, res, next)=>{
 
 
 exports.signUp = catchAsync(async (req, res, next )=>{
+    
    
     const id = req.body?.sudo? await createId(req.body?.role) : req.body.id;
     const email = req.body?.sudo? createEmail(req.body?.fullName).toLowerCase() : req.body.email;
